@@ -1,1 +1,58 @@
+def euclidean_distance(x1, x2):
+#     if len(x1)!=len(x2):
+#         return "ERROR: vector length doesn't match"
+    
+    return  np.sqrt(np.sum((x1-x2)**2,axis=1))
 
+def manhattan_distance(x1, x2):
+    return np.sum(abs(x1-x2), axis=1)
+
+def get_neighbors( X, y, x_test, k, distance= euclidean_distance):
+    # muticlassification, if classes tie, then reduce k until one class wins
+    neighbors = []
+    for x in x_test:
+        dis = distance(X,x)
+        pred_index = np.argsort(dis)
+        y_neighbor = [y[i] for i in pred_index[:k]]
+        neighbors.append(y_neighbor)
+        
+    return neighbors
+    
+def count_neighbor(neighbor_cd):
+    y_0, y_1, y_2 = 0, 0, 0
+    for i in neighbor_cd:
+        if i == 0:
+            y_0 += 1
+        elif i == 1:
+            y_1 += 1
+        elif i == 2:
+            y_2 += 1
+        else:
+            return "ERROR: wrong label!"
+    if y_0 > y_1 and y_0 > y_2:
+        return 0
+    elif y_1 > y_0 and y_1 > y_2:
+        return 1
+    elif y_2 > y_0 and y_2 > y_1:
+        return 2
+    else:
+        return None
+ 
+ def pred(X, y, x_test, k, distance= euclidean_distance):
+    neighbor_lst = get_neighbors(X, y, x_test, k, distance= euclidean_distance)
+    pred_y = []
+    for n in neighbor_lst:
+        res = count_neighbor(n)
+        while res is None:
+            n.pop()
+            res = count_neighbor(n)
+        pred_y.append(res)
+        
+    return pred_y
+
+def evaluate(y, pred_y, x_test):
+    msk = y==pred_y
+    wrong_sample = x_test[~msk]
+    acc = 100 - 100*len(wrong_sample)/len(x_test)
+    print('examples were not correctly classified:' , wrong_sample)
+    print('accuracy:', acc, '%')
